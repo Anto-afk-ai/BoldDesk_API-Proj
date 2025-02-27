@@ -73,7 +73,7 @@
 }
 
 .scale {
-  animation: scale 0.5s ease-in-out;
+  animation: scale 1s ease-in-out;
 }
 
 .rotate {
@@ -81,11 +81,11 @@
 }
 
 .bounce {
-  animation: bounce 0.5s ease-in-out;
+  animation: bounce 1s ease-in-out;
 }
 
 .shake {
-  animation: shake 0.5s ease-in-out;
+  animation: shake 1s ease-in-out;
 }
 
 .button-item {

@@ -3,7 +3,7 @@ import "./animations.css";
 import AnimationButton from "./AnimationButton";
 
 const animations = [
-  { name: "Fade In/Out", type: "fade", color: " --fade-color" },
+  { name: "Fade In/Out", type: "fade", color: "--fade-color" },
   { name: "Slide In/Out", type: "slide", color: "--slide-color" },
   { name: "Scale (Zoom)", type: "scale", color: "--scale-color" },
   { name: "Rotate", type: "rotate", color: "--rotate-color" },
