@@ -13,18 +13,30 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "axios": "^1.7.9",
+    "express": "^5.1.0",
+    "pip": "^0.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
     "web-vitals": "^2.1.4"
   },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "gh-pages": "^6.3.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "node server.js",
+    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
+  "homepage": "https://Anto-afk-ai.github.io/Dummy-React",
+  "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": [
       "react-app",

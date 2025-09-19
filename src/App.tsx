@@ -1,12 +1,11 @@
 import React from 'react';
 import './App.css';
-import HomePage from './Components/HomePage';
-import AnimationComponent from './Components/AnimatioComponent/AnimationComponent';
+import HomePage from './Components/HomePage/HomePage';
 
 function App() {
   return (
-    <div className="App">
-      <AnimationComponent/>
+    <div data-testid="main-app" className="App">
+      <HomePage/>
     </div>
   );
 }
