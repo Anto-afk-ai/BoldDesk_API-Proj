@@ -2,12 +2,13 @@ from flask import Flask, jsonify, render_template, send_from_directory, request
 from const.config import ITEMS
 from waitress import serve
 from const.config import *
+import flask_cors
 
 
 API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
 
 app = Flask(__name__, static_folder='build', template_folder='build')
-
+flask_cors.CORS(app)
 
 # Order Status API
 # Order Status API
