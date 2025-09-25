@@ -11,7 +11,7 @@ app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
 # Register MCP Blueprint
-# app.register_blueprint(mcp)
+app.register_blueprint(mcp)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
@@ -30,7 +30,7 @@ def get_items():
     return jsonify(ITEMS)
 
 # Get item by id
-@app.route('/api/items/<str:item_id>')
+@app.route('/api/items/<string:item_id>', methods=['GET'])
 def get_item(item_id):
     check_api_key()
     for item in ITEMS:
