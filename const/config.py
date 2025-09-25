@@ -1,7 +1,7 @@
 # Mock product/item list for API usage
 ITEMS = [
 	{
-		"id": 1,
+		"id": 'ELC12',
 		"name": "Wireless Mouse",
 		"category": "Electronics",
 		"price": 19.99,
@@ -10,7 +10,7 @@ ITEMS = [
 		"sku": "WM-1001"
 	},
 	{
-		"id": 2,
+		"id": 'ELC22',
 		"name": "Bluetooth Headphones",
 		"category": "Electronics",
 		"price": 49.99,
@@ -19,7 +19,7 @@ ITEMS = [
 		"sku": "BH-2002"
 	},
 	{
-		"id": 3,
+		"id": 'YMC30',
 		"name": "Yoga Mat",
 		"category": "Fitness",
 		"price": 25.00,
@@ -28,7 +28,7 @@ ITEMS = [
 		"sku": "YM-3003"
 	},
 	{
-		"id": 4,
+		"id": 'SWB40',
 		"name": "Stainless Steel Water Bottle",
 		"category": "Outdoors",
 		"price": 15.50,
@@ -37,7 +37,7 @@ ITEMS = [
 		"sku": "WB-4004"
 	},
 	{
-		"id": 5,
+		"id": 'DL551',
 		"name": "Desk Lamp",
 		"category": "Home",
 		"price": 29.99,
@@ -46,7 +46,7 @@ ITEMS = [
 		"sku": "DL-5005"
 	},
 	{
-		"id": 6,
+		"id": 'SH0011',
 		"name": "Running Shoes",
 		"category": "Footwear",
 		"price": 75.00,
@@ -55,7 +55,7 @@ ITEMS = [
 		"sku": "RS-6006"
 	},
 	{
-		"id": 7,
+		"id": 'WW1120',
 		"name": "Smart Watch",
 		"category": "Electronics",
 		"price": 120.00,
@@ -64,7 +64,7 @@ ITEMS = [
 		"sku": "SW-7007"
 	},
 	{
-		"id": 8,
+		"id": 'EEC010',
 		"name": "Coffee Maker",
 		"category": "Kitchen",
 		"price": 59.99,
@@ -73,7 +73,7 @@ ITEMS = [
 		"sku": "CM-8008"
 	},
 	{
-		"id": 9,
+		"id": 'ASC01',
 		"name": "Backpack",
 		"category": "Accessories",
 		"price": 39.99,
@@ -82,7 +82,7 @@ ITEMS = [
 		"sku": "BP-9009"
 	},
 	{
-		"id": 10,
+		"id": 'EEC2201',
 		"name": "Electric Toothbrush",
 		"category": "Personal Care",
 		"price": 34.99,
