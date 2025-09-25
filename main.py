@@ -3,15 +3,15 @@ from const.config import ITEMS
 from waitress import serve
 from const.config import *
 import flask_cors
-
+from mcp_blueprint import mcp
 
 API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
 
 app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
-# Order Status API
-# Order Status API
+# Register MCP Blueprint
+app.register_blueprint(mcp)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
