@@ -3,7 +3,7 @@ from const.config import ITEMS
 from waitress import serve
 from const.config import *
 import flask_cors
-from mcp_blueprint import mcp
+from mcp_blueprint_new import mcp
 
 API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
 
