@@ -11,7 +11,7 @@ app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
 # Register MCP Blueprint
-app.register_blueprint(mcp)
+# app.register_blueprint(mcp)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
