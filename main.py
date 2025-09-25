@@ -30,7 +30,7 @@ def get_items():
     return jsonify(ITEMS)
 
 # Get item by id
-@app.route('/api/items/<int:item_id>')
+@app.route('/api/items/<str:item_id>')
 def get_item(item_id):
     check_api_key()
     for item in ITEMS:
