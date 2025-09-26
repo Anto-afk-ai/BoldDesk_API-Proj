@@ -1,12 +1,61 @@
 # mcp_blueprint.py
 from flask import Blueprint, request, jsonify
-from typing import Dict, List
+from typing import Dict, List, TypedDict, Optional
 from const.config import ITEMS
 import uuid
 import time
+import logging
+from datetime import datetime
+from functools import wraps
+from enum import Enum
 
-active_sessions: Dict[str, float] = {}
-SESSION_TIMEOUT = 1800
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Type definitions for better type safety
+class SessionData(TypedDict):
+    timestamp: float
+    request_count: int
+    last_request: float
+
+class ErrorResponse(TypedDict):
+    type: str
+    request_id: str
+    error: str
+    details: Optional[str]
+
+# Store active sessions with their metadata
+active_sessions: Dict[str, SessionData] = {}
+
+# Constants
+SESSION_TIMEOUT = 1800  # 30 minutes
+MAX_REQUESTS_PER_MINUTE = 60
+RATE_LIMIT_WINDOW = 60  # 1 minute
+
+# Mock data for customer service features
+FAQ_DATA = [
+    {"id": "FAQ001", "q": "How do I track my order?", "a": "You can track your order in the Orders section using your order ID."},
+    {"id": "FAQ002", "q": "What's your return policy?", "a": "We offer 30-day returns on most items. Some restrictions apply."},
+    {"id": "FAQ003", "q": "How long does shipping take?", "a": "Standard shipping takes 3-5 business days."}
+]
+
+TICKET_CATEGORIES = [
+    "Order Issues",
+    "Returns",
+    "Product Information",
+    "Technical Support",
+    "Account Issues",
+    "Shipping",
+    "Billing",
+    "General Inquiry"
+]
+
+# Enum for response types
+class ResponseType(Enum):
+    CONTEXT = "context.response"
+    TOOL = "tool.result"
+    ERROR = "error.response"
 
 def validate_session(session_id: str) -> bool:
     if session_id not in active_sessions:
