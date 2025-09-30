@@ -91,3 +91,47 @@ ITEMS = [
 		"sku": "ET-1010"
 	}
 ]
+
+ORDER_STATUS = [
+	{ 
+        "id" : "ORD12345",
+		"status": "Shipped",
+		"estimated_delivery": "2024-10-05",
+		"tracking_number": "TRACK123456",
+		"carrier": "FastShip",
+		"items": [
+			{"id": 'ELC12', "name": "Wireless Mouse", "quantity": 1},
+			{"id": 'SWB40', "name": "Stainless Steel Water Bottle", "quantity": 2}
+		],
+		"total_amount": 50.99,
+		"shipping_address": "123 Main St, Anytown, USA",
+		"sku": "WM-1001"
+	},
+	{
+        "id" : "ORD12346", 
+		"status": "Processing",
+		"estimated_delivery": "2024-10-10",
+		"tracking_number": None,
+		"carrier": None,
+		"items": [
+			{"id": 'YMC30', "name": "Yoga Mat", "quantity": 1}
+		],
+		"total_amount": 25.00,
+		"shipping_address": "456 Oak Ave, Sometown, USA",
+		"sku": "YM-3003"
+	},
+	{
+        "id" : "ORD12347",
+		"status": "Delivered",
+		"estimated_delivery": "2024-09-20",
+		"tracking_number": "TRACK654321",
+		"carrier": "QuickDelivery",
+		"items": [
+			{"id": 'DL551', "name": "Desk Lamp", "quantity": 1},
+			{"id": 'EEC010', "name": "Coffee Maker", "quantity": 1}
+		],
+		"total_amount": 89.98,
+		"shipping_address": "789 Pine Rd, Yourtown, USA",
+		"sku": "DL-5005"
+	}
+]

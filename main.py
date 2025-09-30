@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, send_from_directory, request
-from const.config import ITEMS
+from const.config import ITEMS, ORDER_STATUS
 from waitress import serve
 from const.config import *
 import flask_cors
@@ -34,6 +34,15 @@ def get_items():
 def get_item(item_id):
     check_api_key()
     for item in ITEMS:
+        if item['id'] == item_id:
+            return jsonify(item)
+    return jsonify({'error': 'Item not found'}), 404
+
+# Get item by id
+@app.route('/api/order/status/<string:item_id>', methods=['GET'])
+def get_orderStatus(item_id):
+    check_api_key()
+    for item in ORDER_STATUS:
         if item['id'] == item_id:
             return jsonify(item)
     return jsonify({'error': 'Item not found'}), 404
