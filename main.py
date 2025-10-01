@@ -22,43 +22,59 @@ def require_api_key():
 def check_api_key():
     if not require_api_key():
         return jsonify({'error': 'Invalid or missing API key'}), 401
+    return None
     
 # List all items
 @app.route('/api/items')
 def get_items():
-    check_api_key()
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
     return jsonify(ITEMS)
 
 # Get item by id
 @app.route('/api/items/<string:item_id>', methods=['GET'])
 def get_item(item_id):
-    check_api_key()
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
     for item in ITEMS:
         if item['id'] == item_id:
             return jsonify(item)
     return jsonify({'error': 'Item not found'}), 404
 
-# Get item by id
-@app.route('/api/order/status/<string:item_id>', methods=['GET'])
-def get_orderStatus(item_id):
-    check_api_key()
+# Get order status
+@app.route('/api/order/status', methods=['GET'])
+def get_orderStatus():
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
+    item_id = request.args.get('item_id')
+    if not item_id:
+        return jsonify({'error': 'Missing item_id parameter'}), 400
     for item in ORDER_STATUS:
         if item['id'] == item_id:
             return jsonify(item)
-    return jsonify({'error': 'Item not found'}), 404
+    return jsonify({'error': 'Order not found'}), 404
 
 # Search items by name or category
 @app.route('/api/items/search')
 def search_items():
-    check_api_key()
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
     q = request.args.get('q', '').lower()
+    if not q:
+        return jsonify({'error': 'Missing search query'}), 400
     results = [item for item in ITEMS if q in item['name'].lower() or q in item['category'].lower()]
     return jsonify(results)
 
 # Returns API
 @app.route('/api/returns')
 def returns():
-    from flask import request
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
     order_id = request.args.get('orderId')
     if not order_id:
         return jsonify({'error': 'Missing orderId'}), 400
@@ -74,7 +90,9 @@ def returns():
 # Refunds API
 @app.route('/api/refunds')
 def refunds():
-    from flask import request
+    api_key_check = check_api_key()
+    if api_key_check:
+        return api_key_check
     order_id = request.args.get('orderId')
     if not order_id:
         return jsonify({'error': 'Missing orderId'}), 400
