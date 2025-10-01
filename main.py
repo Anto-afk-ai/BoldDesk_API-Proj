@@ -27,17 +27,13 @@ def check_api_key():
 # List all items
 @app.route('/api/items')
 def get_items():
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     return jsonify(ITEMS)
 
 # Get item by id
 @app.route('/api/items/<string:item_id>', methods=['GET'])
 def get_item(item_id):
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     for item in ITEMS:
         if item['id'] == item_id:
             return jsonify(item)
@@ -46,9 +42,7 @@ def get_item(item_id):
 # Get order status
 @app.route('/api/order/status', methods=['GET'])
 def get_orderStatus():
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     item_id = request.args.get('item_id')
     if not item_id:
         return jsonify({'error': 'Missing item_id parameter'}), 400
@@ -60,9 +54,7 @@ def get_orderStatus():
 # Search items by name or category
 @app.route('/api/items/search')
 def search_items():
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     q = request.args.get('q', '').lower()
     if not q:
         return jsonify({'error': 'Missing search query'}), 400
@@ -72,9 +64,7 @@ def search_items():
 # Returns API
 @app.route('/api/returns')
 def returns():
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     order_id = request.args.get('orderId')
     if not order_id:
         return jsonify({'error': 'Missing orderId'}), 400
@@ -90,9 +80,7 @@ def returns():
 # Refunds API
 @app.route('/api/refunds')
 def refunds():
-    api_key_check = check_api_key()
-    if api_key_check:
-        return api_key_check
+    check_api_key()
     order_id = request.args.get('orderId')
     if not order_id:
         return jsonify({'error': 'Missing orderId'}), 400
