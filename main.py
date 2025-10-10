@@ -15,8 +15,8 @@ api = Blueprint("api", __name__, url_prefix="/api")
 order = Blueprint("order", __name__, url_prefix="/order")
 
 # Register Blueprints
-api.register_blueprint(order)
 app.register_blueprint(api)
+api.register_blueprint(order)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
