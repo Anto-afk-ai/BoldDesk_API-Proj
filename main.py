@@ -1,5 +1,5 @@
-from flask import Flask, jsonify, render_template, send_from_directory, request
-from const.config import ITEMS, ORDER_STATUS
+from flask import Blueprint, Flask, jsonify, render_template, send_from_directory, request
+from const.config import ITEMS, ORDERS
 from waitress import serve
 from const.config import *
 import flask_cors
@@ -10,8 +10,13 @@ API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
 app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
-# Register MCP Blueprint
-app.register_blueprint(mcp)
+api = Blueprint("api", __name__, url_prefix="/api")
+
+order = Blueprint("order", __name__, url_prefix="/order")
+
+# Register Blueprints
+api.register_blueprint(order)
+app.register_blueprint(api)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
@@ -23,15 +28,23 @@ def check_api_key():
     if not require_api_key():
         return jsonify({'error': 'Invalid or missing API key'}), 401
     return None
-    
+
 # List all items
-@app.route('/api/items')
+@api.route('/items')
 def get_items():
     check_api_key()
     return jsonify(ITEMS)
 
+@app.route('/validate_user/<string:user_mail>', methods=['GET'])
+def validate_user(user_mail):
+    check_api_key()
+    if user_mail == "brianson.23@gmail.com":
+        return jsonify({'status': 'User validated'})
+    else:
+        return jsonify({'status': 'User not recognized'}), 404
+
 # Get item by id
-@app.route('/api/items/<string:item_id>', methods=['GET'])
+@api.route('/items/<string:item_id>', methods=['GET'])
 def get_item(item_id):
     check_api_key()
     for item in ITEMS:
@@ -40,19 +53,19 @@ def get_item(item_id):
     return jsonify({'error': 'Item not found'}), 404
 
 # Get order status
-@app.route('/api/order/status', methods=['GET'])
+@order.route('/status', methods=['GET'])
 def get_orderStatus():
     check_api_key()
     item_id = request.args.get('item_id')
     if not item_id:
         return jsonify({'error': 'Missing item_id parameter'}), 400
-    for item in ORDER_STATUS:
+    for item in ORDERS:
         if item['id'] == item_id:
             return jsonify(item)
     return jsonify({'error': 'Order not found'}), 404
 
 # Search items by name or category
-@app.route('/api/items/search')
+@api.route('/items/search')
 def search_items():
     check_api_key()
     q = request.args.get('q', '').lower()
@@ -61,52 +74,10 @@ def search_items():
     results = [item for item in ITEMS if q in item['name'].lower() or q in item['category'].lower()]
     return jsonify(results)
 
-# Returns API
-@app.route('/api/returns')
-def returns():
-    check_api_key()
-    order_id = request.args.get('orderId')
-    if not order_id:
-        return jsonify({'error': 'Missing orderId'}), 400
-    if order_id == 'ORD12346':
-        return jsonify({
-            'orderId': order_id,
-            'returnEligible': True,
-            'reason': 'Within 30 days',
-            'instructions': 'Use the prepaid label to return your item.'
-        })
-    return jsonify({'error': 'Order not found or not eligible for return'}), 404
-
-# Refunds API
-@app.route('/api/refunds')
-def refunds():
-    check_api_key()
-    order_id = request.args.get('orderId')
-    if not order_id:
-        return jsonify({'error': 'Missing orderId'}), 400
-    if order_id == 'ORD12347':
-        return jsonify({
-            'orderId': order_id,
-            'refundStatus': 'Pending',
-            'amount': 49.99,
-            'method': 'Original payment method'
-        })
-    return jsonify({'error': 'Order not found or not eligible for refund'}), 404
-
-# FAQ API
-@app.route('/api/faq')
-def faq():
-    return jsonify([
-        { 'q': 'How do I track my order?', 'a': 'Use the order status page.' },
-        { 'q': 'How do I request a return?', 'a': 'Go to your orders and select return.' }
-    ])
-
-# Knowledge Base API
-@app.route('/api/key')
+@api.route('/key')
 def kb():
     return API_KEY
 
-# Serve React build and SPA fallback
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_frontend(path):
