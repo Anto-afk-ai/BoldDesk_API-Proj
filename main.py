@@ -11,18 +11,11 @@ app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
 api = Blueprint("api", __name__, url_prefix="/api")
-
 order = Blueprint("order", __name__, url_prefix="/order")
-
-# Register Blueprints
-app.register_blueprint(api)
-api.register_blueprint(order)
 
 def require_api_key():
     key = request.headers.get('X-API-KEY')
-    if key != API_KEY:
-        return False
-    return True
+    return key == API_KEY
 
 def check_api_key():
     if not require_api_key():
@@ -30,23 +23,28 @@ def check_api_key():
     return None
 
 # List all items
-@api.route('/items')
+@api.route('/items', methods=['GET'])
 def get_items():
-    check_api_key()
+    auth_resp = check_api_key()
+    if auth_resp:
+        return auth_resp
     return jsonify(ITEMS)
 
 @app.route('/validate_user/<string:user_mail>', methods=['GET'])
 def validate_user(user_mail):
-    check_api_key()
+    auth_resp = check_api_key()
+    if auth_resp:
+        return auth_resp
     if user_mail == "brianson.23@gmail.com":
         return jsonify({'status': 'User validated'})
-    else:
-        return jsonify({'status': 'User not recognized'}), 404
+    return jsonify({'status': 'User not recognized'}), 404
 
 # Get item by id
 @api.route('/items/<string:item_id>', methods=['GET'])
 def get_item(item_id):
-    check_api_key()
+    auth_resp = check_api_key()
+    if auth_resp:
+        return auth_resp
     for item in ITEMS:
         if item['id'] == item_id:
             return jsonify(item)
@@ -55,7 +53,9 @@ def get_item(item_id):
 # Get order status
 @order.route('/status', methods=['GET'])
 def get_orderStatus():
-    check_api_key()
+    auth_resp = check_api_key()
+    if auth_resp:
+        return auth_resp
     item_id = request.args.get('item_id')
     if not item_id:
         return jsonify({'error': 'Missing item_id parameter'}), 400
@@ -77,6 +77,10 @@ def search_items():
 @api.route('/key')
 def kb():
     return API_KEY
+
+api.register_blueprint(order)
+
+app.register_blueprint(api)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
