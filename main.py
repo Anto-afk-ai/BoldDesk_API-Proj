@@ -7,6 +7,7 @@ from const.config import ITEMS, ORDERS
 from waitress import serve
 from const.config import *
 import flask_cors
+from utils.order_calculator import get_bulk_order_quote
 
 API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
 ALLOWED_KEYS = {API_KEY}
@@ -220,19 +221,61 @@ def search_items():
 @require_api_key
 def get_order_status():
 
-    order_id = request.args.get('order_id')  # use order_id, not item_id
-    if not order_id:
-        return jsonify({'error': 'Missing order_id parameter'}), 400
+    try:
+        order_id = request.args.get('order_id')
+        if not order_id:
+            return jsonify({'error': 'Missing order_id parameter'}), 400
 
-    user = get_current_user()
-    if not user:
-        return jsonify({'error': 'No user logged in'}), 401
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'No user logged in'}), 401
 
-    order = find_order_for_user(user['email'], order_id)
-    if not order:
-        return jsonify({'error': 'Order not found'}), 404
+        order = find_order_for_user(user['email'], order_id)
+        if not order:
+            return jsonify({'error': 'Order not found'}), 404
 
-    return jsonify(order), 200
+        return jsonify(order['status']), 200
+    except Exception as e:
+        print(f"Error fetching order status: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@order.route('/calculate-bulk', methods=['POST'])
+@require_api_key
+def calculate_bulk_order():
+    """
+    Calculate bulk order prices with applicable discounts
+    
+    Expected request body:
+    {
+        "items": [
+            {"item_id": "COF001", "quantity": 10},
+            {"item_id": "SNK001", "quantity": 5}
+        ]
+    }
+    """
+    try:
+        data = request.get_json()
+        if not data or 'items' not in data:
+            return jsonify({'error': 'Missing items list in request'}), 400
+
+        items = data['items']
+        if not isinstance(items, list):
+            return jsonify({'error': 'Items must be a list'}), 400
+
+        # Validate each item
+        for item in items:
+            if not isinstance(item, dict) or 'item_id' not in item or 'quantity' not in item:
+                return jsonify({'error': 'Each item must have item_id and quantity'}), 400
+            if not isinstance(item['quantity'], int) or item['quantity'] <= 0:
+                return jsonify({'error': 'Quantity must be a positive integer'}), 400
+
+        # Calculate the quote
+        quote = get_bulk_order_quote(items)
+        return jsonify(quote), 200
+
+    except Exception as e:
+        print(f"Error calculating bulk order: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @order.route('put_order/<string:order_id>', methods=['PUT'])
 @require_api_key

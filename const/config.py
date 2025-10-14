@@ -1,5 +1,4 @@
 # Mock product/item list for API usage
-from flask import send_from_directory
 ITEMS = [
     {
         "id": 'COF001',
@@ -112,7 +111,7 @@ ORDERS = [
     {"anto.sf3688@gmail.com":[
         {
         "id": "ORD20001",
-        "status": "Shipped",
+        "status": "Out for Delivery",
         "estimated_delivery": "2025-10-12",
         "tracking_number": "TRACK200001",
         "carrier": "FastShip",
@@ -148,53 +147,7 @@ ORDERS = [
 				{"id": "EQP001", "name": "Commercial Coffee Filter Papers", "quantity": 1, "price": 29.99, "sku": "CFP-3001", "subtotal": 29.99}
 			],
 			"order_total": 87.96,
-			"shipping_address": "78 Latte Blvd, Caffeine Town, USA"
+			"shipping_address": "12 Brew Lane, Roastville, USA"
 		}
 	]}
 ];
-
-# item_lookup = {item["id"]: item for item in ITEMS}
-
-# enriched_orders = []
-
-# for order in ORDERS:
-#     enriched_order = order.copy()
-#     enriched_items = []
-#     order_total_calculated = 0.0
-
-#     for it in order["items"]:
-#         product_id = it.get("id")
-#         quantity = it.get("quantity", 1)
-
-#         product = item_lookup.get(product_id)
-#         if product:
-#             price = product.get("price", 0.0)
-#             subtotal = round(price * quantity, 2)
-#             order_total_calculated += subtotal
-
-#             enriched_item = {
-#                 "id": product_id,
-#                 "name": product.get("name"),
-#                 "quantity": quantity,
-#                 "price": price,
-#                 "sku": product.get("sku"),
-#                 "subtotal": subtotal
-#             }
-#         else:
-#             # fallback to original item fields if no product match
-#             enriched_item = {
-#                 "id": product_id,
-#                 "name": it.get("name"),
-#                 "quantity": quantity,
-#                 "price": it.get("price", None),
-#                 "sku": it.get("sku", None),
-#                 "subtotal": None
-#             }
-
-#         enriched_items.append(enriched_item)
-
-#     enriched_order["items"] = enriched_items
-#     enriched_order["order_total_calculated"] = round(order_total_calculated, 2)
-#     enriched_orders.append(enriched_order)
-
-# ORDERS = enriched_orders
