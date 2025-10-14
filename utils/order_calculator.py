@@ -11,7 +11,7 @@ def find_item_by_name(name: str) -> Optional[Dict]:
         return None
     q = name.strip().lower()
     return next(
-        (item for item in ITEMS if q in item.get("name", "").strip().lower()),
+        (item for item in ITEMS if q in item.get(name, "").strip().lower()),
         None
     )
 
