@@ -234,7 +234,7 @@ def get_order_status():
         if not order:
             return jsonify({'error': 'Order not found'}), 404
 
-        return jsonify(order['status']), 200
+        return jsonify({"status": order['status']}), 200
     except Exception as e:
         print(f"Error fetching order status: {e}")
         return jsonify({'error': 'Internal server error'}), 500

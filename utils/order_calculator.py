@@ -5,6 +5,16 @@ def find_item_by_id(item_id: str) -> Optional[Dict]:
     """Find an item in the ITEMS list by its ID"""
     return next((item for item in ITEMS if item['id'] == item_id), None)
 
+def find_item_by_name(name: str) -> Optional[Dict]:
+    """Find an item in ITEMS whose name contains the given string (case-insensitive)."""
+    if not name:
+        return None
+    q = name.strip().lower()
+    return next(
+        (item for item in ITEMS if q in item.get("name", "").strip().lower()),
+        None
+    )
+
 def get_bulk_discount(item: Dict, quantity: int) -> float:
     """
     Get the applicable bulk discount percentage for the given quantity
@@ -48,7 +58,7 @@ def calculate_order_total(items: List[Dict[str, int]]) -> Dict:
         if not item_id or quantity <= 0:
             continue
             
-        item = find_item_by_id(str(item_id))
+        item = find_item_by_name(str(item_id))
         if not item:
             continue
             
