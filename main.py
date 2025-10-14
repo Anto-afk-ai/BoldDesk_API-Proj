@@ -264,8 +264,8 @@ def calculate_bulk_order():
 
         # Validate each item
         for item in items:
-            if not isinstance(item, dict) or 'item_id' not in item or 'quantity' not in item:
-                return jsonify({'error': 'Each item must have item_id and quantity'}), 400
+            if not isinstance(item, dict) or 'name' not in item or 'quantity' not in item:
+                return jsonify({'error': 'Each item must have name and quantity'}), 400
             if not isinstance(item['quantity'], int) or item['quantity'] <= 0:
                 return jsonify({'error': 'Quantity must be a positive integer'}), 400
 
