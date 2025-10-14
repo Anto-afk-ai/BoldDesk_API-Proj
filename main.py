@@ -1,11 +1,127 @@
+import copy
+from functools import wraps
+import threading
+from typing import Any, Dict, List, Optional
 from flask import Blueprint, Flask, jsonify, render_template, send_from_directory, request
 from const.config import ITEMS, ORDERS
 from waitress import serve
 from const.config import *
 import flask_cors
-from mcp_blueprint_new import mcp
 
 API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
+ALLOWED_KEYS = {API_KEY}
+
+def is_valid_api_key(key: str | None) -> bool:
+    if not key:
+        return False
+    return key in ALLOWED_KEYS
+
+def require_api_key(view_func):
+    @wraps(view_func)
+    def wrapped(*args, **kwargs):
+        key = request.headers.get("X-API-KEY")
+        if not is_valid_api_key(key):
+            app.logger.debug("API key invalid or missing: %s", key)
+            return jsonify({"error": "Invalid or missing API key"}), 401
+        return view_func(*args, **kwargs)
+    return wrapped
+
+
+_CURRENT_ORDERS: Dict[str, List[Dict[str, Any]]] = {}
+_CURRENT_ORDERS_LOCK = threading.Lock()
+
+def set_current_orders(orders_map: Dict[str, List[Dict[str, Any]]]) -> None:
+    global _CURRENT_ORDERS
+    with _CURRENT_ORDERS_LOCK:
+        _CURRENT_ORDERS = copy.deepcopy(orders_map)
+
+def get_current_orders() -> Dict[str, List[Dict[str, Any]]]:
+    with _CURRENT_ORDERS_LOCK:
+        return copy.deepcopy(_CURRENT_ORDERS)
+
+def get_orders_for_user(email: str) -> List[Dict[str, Any]]:
+    with _CURRENT_ORDERS_LOCK:
+        return copy.deepcopy(_CURRENT_ORDERS.get(email, []))
+
+def set_orders_for_user(email: str, orders: List[Dict[str, Any]]) -> None:
+    with _CURRENT_ORDERS_LOCK:
+        _CURRENT_ORDERS[email] = copy.deepcopy(orders)
+
+def add_order_for_user(email: str, order: Dict[str, Any]) -> None:
+    with _CURRENT_ORDERS_LOCK:
+        _CURRENT_ORDERS.setdefault(email, []).append(copy.deepcopy(order))
+
+def find_order_for_user(email: str, order_id: str) -> Optional[Dict[str, Any]]:
+    with _CURRENT_ORDERS_LOCK:
+        orders = _CURRENT_ORDERS.get(email, [])
+        for o in orders:
+            if o.get("id") == order_id:
+                return copy.deepcopy(o)
+    return None
+
+def update_order_for_user(email: str, order_id: str, updates: Dict[str, Any]) -> bool:
+    with _CURRENT_ORDERS_LOCK:
+        orders = _CURRENT_ORDERS.get(email)
+        if not orders:
+            return False
+        for i, o in enumerate(orders):
+            if o.get("id") == order_id:
+                updated = dict(o)  # shallow copy of order dict
+                updated.update(updates)
+                orders[i] = copy.deepcopy(updated)
+                return True
+    return False
+
+def remove_order_for_user(email: str, order_id: str) -> bool:
+    with _CURRENT_ORDERS_LOCK:
+        orders = _CURRENT_ORDERS.get(email)
+        if not orders:
+            return False
+        for i, o in enumerate(orders):
+            if o.get("id") == order_id:
+                del orders[i]
+                # cleanup empty list
+                if not orders:
+                    _CURRENT_ORDERS.pop(email, None)
+                return True
+    return False
+
+def recalc_order_total(order: Dict[str, Any]) -> float:
+    items = order.get("items", [])
+    total = 0.0
+    for it in items:
+        price = float(it.get("price", 0) or 0)
+        qty = int(it.get("quantity", 0) or 0)
+        subtotal = round(price * qty, 2)
+        it["subtotal"] = subtotal
+        total += subtotal
+    return round(total, 2)
+
+
+def clear_orders_for_user(email: str) -> None:
+    with _CURRENT_ORDERS_LOCK:
+        _CURRENT_ORDERS.pop(email, None)
+
+def clear_all_orders() -> None:
+    with _CURRENT_ORDERS_LOCK:
+        _CURRENT_ORDERS.clear()
+
+
+_CURRENT_USER = None
+_CURRENT_USER_LOCK = threading.Lock()
+def set_current_user(user_obj):
+    with _CURRENT_USER_LOCK:
+        global _CURRENT_USER
+        _CURRENT_USER = user_obj
+
+def get_current_user():
+    with _CURRENT_USER_LOCK:
+        return _CURRENT_USER
+
+def clear_current_user():
+    with _CURRENT_USER_LOCK:
+        global _CURRENT_USER
+        _CURRENT_USER = None
 
 app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
@@ -13,66 +129,146 @@ flask_cors.CORS(app)
 api = Blueprint("api", __name__, url_prefix="/api")
 order = Blueprint("order", __name__, url_prefix="/order")
 
-def require_api_key():
-    key = request.headers.get('X-API-KEY')
-    return key == API_KEY
-
-def check_api_key():
-    if not require_api_key():
-        return jsonify({'error': 'Invalid or missing API key'}), 401
-    return None
-
 # List all items
 @api.route('/items', methods=['GET'])
+@require_api_key
 def get_items():
-    auth_resp = check_api_key()
-    if auth_resp:
-        return auth_resp
     return jsonify(ITEMS)
 
-@app.route('/validate_user/<string:user_mail>', methods=['GET'])
-def validate_user(user_mail):
-    auth_resp = check_api_key()
-    if auth_resp:
-        return auth_resp
-    if user_mail == "brianson.23@gmail.com":
-        return jsonify({'status': 'User validated'})
-    return jsonify({'status': 'User not recognized'}), 404
+@app.route('/static/images/<path:filename>')
+def serve_product_image(filename):
+    try:
+        return send_from_directory('images', filename)
+    except Exception:
+        # Return a default image or 404
+        return send_from_directory('images', 'default-product.png')
+
+@app.route('/logout', methods=['POST'])
+@require_api_key
+def logout():
+
+    user = get_current_user()
+    if user:
+        clear_current_user()
+        return jsonify({"status": "ok"}), 200
+    return jsonify({"error": "No user logged in"}), 401
+
+from flask import request, jsonify
+from datetime import datetime
+
+@app.route('/login_user', methods=['POST'])
+@require_api_key
+def login():
+    try:
+        data = request.get_json(silent=True) or {}
+        email = data.get('email', '').strip()
+        password = data.get('password', '')
+
+        if not email or not password:
+            return jsonify({'error': 'Email / Password is missing.'}), 400
+        
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return jsonify({'error': 'Invalid email format.'}), 400
+        
+        user_obj = {
+            "email": email,
+            "password": password,
+        }
+        set_current_user(user_obj)
+
+        print(f"User logged in: {email}")
+        return jsonify({"status": "ok", "user": {"email": email}}), 200
+
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 # Get item by id
 @api.route('/items/<string:item_id>', methods=['GET'])
+@require_api_key
 def get_item(item_id):
-    auth_resp = check_api_key()
-    if auth_resp:
-        return auth_resp
     for item in ITEMS:
         if item['id'] == item_id:
             return jsonify(item)
     return jsonify({'error': 'Item not found'}), 404
 
-# Get order status
-@order.route('/status', methods=['GET'])
-def get_orderStatus():
-    auth_resp = check_api_key()
-    if auth_resp:
-        return auth_resp
-    item_id = request.args.get('item_id')
-    if not item_id:
-        return jsonify({'error': 'Missing item_id parameter'}), 400
-    for item in ORDERS:
-        if item['id'] == item_id:
-            return jsonify(item)
-    return jsonify({'error': 'Order not found'}), 404
+# List orders for current user
+@api.route('/orders', methods=['GET'])
+@require_api_key
+def get_orders():
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'No user logged in'}), 401
+
+    orders = get_orders_for_user(user['email'])
+    return jsonify(orders), 200
+
 
 # Search items by name or category
 @api.route('/items/search')
+@require_api_key
 def search_items():
-    check_api_key()
     q = request.args.get('q', '').lower()
     if not q:
         return jsonify({'error': 'Missing search query'}), 400
     results = [item for item in ITEMS if q in item['name'].lower() or q in item['category'].lower()]
     return jsonify(results)
+
+# Gets Order Status using Order ID
+@order.route('/status', methods=['GET'])
+@require_api_key
+def get_order_status():
+
+    order_id = request.args.get('order_id')  # use order_id, not item_id
+    if not order_id:
+        return jsonify({'error': 'Missing order_id parameter'}), 400
+
+    user = get_current_user()
+    if not user:
+        return jsonify({'error': 'No user logged in'}), 401
+
+    order = find_order_for_user(user['email'], order_id)
+    if not order:
+        return jsonify({'error': 'Order not found'}), 404
+
+    return jsonify(order), 200
+
+@order.route('put_order/<string:order_id>', methods=['PUT'])
+@require_api_key
+def put_order(order_id: str):
+
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "No user logged in"}), 401
+
+    payload = request.get_json(silent=True)
+    if not payload or not isinstance(payload, dict):
+        return jsonify({"error": "JSON object required"}), 400
+
+    # Validate required keys minimally for a full-order replace
+    if "items" not in payload or not isinstance(payload["items"], list):
+        return jsonify({"error": "items (list) required for full replace"}), 400
+
+    existing = find_order_for_user(user["email"], order_id)
+    if not existing:
+        return jsonify({"error": "Order not found"}), 404
+
+    # Build new order object preserving id and user-scoped fields as needed
+    new_order = dict(payload)
+    new_order["id"] = order_id
+    if "order_total" not in new_order:
+        new_order["order_total"] = recalc_order_total(new_order)
+    else:
+        # normalize subtotal values if provided
+        recalc_order_total(new_order)
+
+    success = update_order_for_user(user["email"], order_id, new_order)
+    if not success:
+        return jsonify({"error": "Failed to replace order"}), 500
+
+    updated = find_order_for_user(user["email"], order_id)
+    return jsonify(updated), 200
 
 @api.route('/key')
 def kb():
