@@ -10,10 +10,11 @@ def find_item_by_name(name: str) -> Optional[Dict]:
     if not name:
         return None
     q = name.strip().lower()
-    return next(
-        (item for item in ITEMS if q in item.get(name, "").strip().lower()),
-        None
-    )
+    for item in ITEMS:
+        item_name = (item.get("name") or "").strip().lower()
+        if q in item_name:
+            return item
+    return None
 
 def get_bulk_discount(item: Dict, quantity: int) -> float:
     """
