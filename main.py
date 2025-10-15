@@ -119,7 +119,7 @@ def get_current_user():
     with _CURRENT_USER_LOCK:
         if _CURRENT_USER: return _CURRENT_USER
         else: return {
-            "email": 'anto.sf3688@gmai.com',
+            "email": 'anto.sf3688@gmail.com',
             "password": 'password',
         }
 
@@ -291,7 +291,8 @@ def update_shipping_address():
     
     Expected request body:
     {
-        "shipping_address": "New shipping address"
+        "shipping_address": "New shipping address",
+        "order_id": "ORD20001"
     }
     """
     try:
