@@ -1,9 +1,5 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from const.config import ITEMS
-
-def find_item_by_id(item_id: str) -> Optional[Dict]:
-    """Find an item in the ITEMS list by its ID"""
-    return next((item for item in ITEMS if item['id'] == item_id), None)
 
 def find_item_by_name(name: str) -> Optional[Dict]:
     """Find an item in ITEMS whose name contains the given string (case-insensitive)."""
@@ -32,12 +28,12 @@ def get_bulk_discount(item: Dict, quantity: int) -> float:
     
     return max(applicable_discounts) if applicable_discounts else 0.0
 
-def calculate_order_total(items: List[Dict[str, int]]) -> Dict:
+def calculate_order_total(items: List[Dict[str, Any]]) -> Dict:
     """
     Calculate the total cost of an order including bulk discounts
     
     Args:
-        items: List of dicts with {'item_id': str, 'quantity': int}
+        items: List of dicts with {'name': str, 'quantity': int}
         
     Returns:
         Dict containing:
@@ -53,16 +49,17 @@ def calculate_order_total(items: List[Dict[str, int]]) -> Dict:
     bulk_savings = []
 
     for order_item in items:
-        item_id = order_item.get('item_id')
+        name = order_item.get('name', '')
         quantity = order_item.get('quantity', 0)
         
-        if not item_id or quantity <= 0:
+        if not name or quantity <= 0:
             continue
             
-        item = find_item_by_name(str(item_id))
+        # Find item by name
+        item = find_item_by_name(name)
         if not item:
             continue
-            
+        
         # Calculate item subtotal before discount
         item_subtotal = item['price'] * quantity
         
@@ -79,14 +76,13 @@ def calculate_order_total(items: List[Dict[str, int]]) -> Dict:
         
         # Add detailed item calculation
         items_detail.append({
-            'item_id': item_id,
             'name': item['name'],
             'quantity': quantity,
             'unit_price': item['price'],
-            'subtotal': item_subtotal,
+            'subtotal': round(item_subtotal, 2),
             'discount_percent': discount_percent,
-            'discount_amount': discount_amount,
-            'final_amount': final_amount
+            'discount_amount': round(discount_amount, 2),
+            'final_amount': round(final_amount, 2)
         })
         
         # If there was a bulk discount, add to savings summary
@@ -108,12 +104,12 @@ def calculate_order_total(items: List[Dict[str, int]]) -> Dict:
         'bulk_savings': bulk_savings
     }
 
-def get_bulk_order_quote(items: List[Dict[str, int]]) -> Dict:
+def get_bulk_order_quote(items: List[Dict[str, Any]]) -> Dict:
     """
     Generate a detailed quote for bulk orders
     
     Args:
-        items: List of dicts with {'item_id': str, 'quantity': int}
+        items: List of dicts with {'name': str, 'quantity': int}
         
     Returns:
         Dict containing the quote details and savings summary

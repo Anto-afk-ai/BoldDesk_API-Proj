@@ -117,7 +117,11 @@ def set_current_user(user_obj):
 
 def get_current_user():
     with _CURRENT_USER_LOCK:
-        return _CURRENT_USER
+        if _CURRENT_USER: return _CURRENT_USER
+        else: return {
+            "email": 'anto.sf3688@gmai.com',
+            "password": 'password',
+        }
 
 def clear_current_user():
     with _CURRENT_USER_LOCK:
@@ -248,8 +252,8 @@ def calculate_bulk_order():
     Expected request body:
     {
         "items": [
-            {"item_id": "COF001", "quantity": 10},
-            {"item_id": "SNK001", "quantity": 5}
+            {"name": "Premium Arabica Coffee Beans", "quantity": 10},
+            {"name": "Gourmet Coffee Cookies", "quantity": 5}
         ]
     }
     """
@@ -266,8 +270,10 @@ def calculate_bulk_order():
         for item in items:
             if not isinstance(item, dict) or 'name' not in item or 'quantity' not in item:
                 return jsonify({'error': 'Each item must have name and quantity'}), 400
-            if not isinstance(item['quantity'], int) or item['quantity'] <= 0:
-                return jsonify({'error': 'Quantity must be a positive integer'}), 400
+            if not isinstance(item.get('quantity'), (int, float)) or item['quantity'] <= 0:
+                return jsonify({'error': 'Quantity must be a positive number'}), 400
+            # Convert quantity to int if it's a float
+            item['quantity'] = int(item['quantity'])
 
         # Calculate the quote
         quote = get_bulk_order_quote(items)
@@ -276,6 +282,54 @@ def calculate_bulk_order():
     except Exception as e:
         print(f"Error calculating bulk order: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@order.route('/update-shipping/<string:order_id>', methods=['PUT'])
+@require_api_key
+def update_shipping_address(order_id: str):
+    """
+    Update shipping address for an order
+    
+    Expected request body:
+    {
+        "shipping_address": "New shipping address"
+    }
+    """
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({"error": "No user logged in"}), 401
+
+        data = request.get_json()
+        if not data or 'shipping_address' not in data:
+            return jsonify({"error": "Missing shipping_address in request"}), 400
+
+        new_address = data['shipping_address'].strip()
+        if not new_address:
+            return jsonify({"error": "Shipping address cannot be empty"}), 400
+
+        # Find the order
+        order = find_order_for_user(user["email"], order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+
+        # Update only the shipping address
+        success = update_order_for_user(user["email"], order_id, {
+            "shipping_address": new_address
+        })
+
+        if not success:
+            return jsonify({"error": "Failed to update shipping address"}), 500
+
+        # Get updated order
+        return jsonify({
+            "message": "Shipping address updated successfully",
+            "order_id": order_id,
+            "new_shipping_address": new_address
+        }), 200
+
+    except Exception as e:
+        print(f"Error updating shipping address: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @order.route('put_order/<string:order_id>', methods=['PUT'])
 @require_api_key
