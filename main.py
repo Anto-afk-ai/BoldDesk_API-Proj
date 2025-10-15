@@ -283,9 +283,9 @@ def calculate_bulk_order():
         print(f"Error calculating bulk order: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
-@order.route('/update-shipping/<string:order_id>', methods=['PUT'])
+@order.route('/update-shipping', methods=['POST'])
 @require_api_key
-def update_shipping_address(order_id: str):
+def update_shipping_address():
     """
     Update shipping address for an order
     
@@ -306,7 +306,9 @@ def update_shipping_address(order_id: str):
         new_address = data['shipping_address'].strip()
         if not new_address:
             return jsonify({"error": "Shipping address cannot be empty"}), 400
-
+        order_id = data.get('order_id', '').strip()
+        if not order_id:
+            return jsonify({"error": "Missing order_id in request"}), 400
         # Find the order
         order = find_order_for_user(user["email"], order_id)
         if not order:
