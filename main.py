@@ -131,6 +131,11 @@ def clear_current_user():
 app = Flask(__name__, static_folder='build', template_folder='build')
 flask_cors.CORS(app)
 
+# Initialize orders from config
+for order_entry in ORDERS:
+    for email, orders in order_entry.items():
+        set_orders_for_user(email, orders)
+
 api = Blueprint("api", __name__, url_prefix="/api")
 order = Blueprint("order", __name__, url_prefix="/order")
 
