@@ -298,14 +298,18 @@ def calculate_bulk_order():
                         'quantity': quantity
                     })
 
-                    # Calculate the quote using the processed_items list
-                    quote = get_bulk_order_quote(processed_items)
-
-                    return jsonify(quote), 200
                 else:
                     return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
             except (TypeError, ValueError):
                 return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
+
+        # Ensure we processed at least one item
+        if not processed_items:
+            return jsonify({'error': 'No valid items provided'}), 400
+
+        # Calculate the quote using the processed_items list after processing all items
+        quote = get_bulk_order_quote(processed_items)
+        return jsonify(quote), 200
 
     except Exception as e:
         # Prefer structured logging in real apps
