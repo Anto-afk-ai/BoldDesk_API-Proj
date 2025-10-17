@@ -285,7 +285,7 @@ def calculate_bulk_order():
             # Coerce quantity to number (accept string numbers like "200")
             try:
                 # allow integers and floats; treat float quantities as numeric then cast to int
-                if isinstance(raw_qty, (int, float)):
+                if raw_qty is not None:
                     qty_num = float(raw_qty)
                 else:
                     return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
