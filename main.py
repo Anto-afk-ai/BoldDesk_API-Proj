@@ -287,26 +287,25 @@ def calculate_bulk_order():
                 # allow integers and floats; treat float quantities as numeric then cast to int
                 if raw_qty is not None:
                     qty_num = float(raw_qty)
+                    if qty_num <= 0:
+                        return jsonify({'error': f'Quantity must be a positive number for item "{name}"'}), 400
+
+                    # Convert to int if desired (rounding down); adjust if you prefer rounding
+                    quantity = int(qty_num)
+
+                    processed_items.append({
+                        'name': name.strip(),
+                        'quantity': quantity
+                    })
+
+                    # Calculate the quote using the processed_items list
+                    quote = get_bulk_order_quote(processed_items)
+
+                    return jsonify(quote), 200
                 else:
                     return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
             except (TypeError, ValueError):
                 return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
-
-            if qty_num <= 0:
-                return jsonify({'error': f'Quantity must be a positive number for item "{name}"'}), 400
-
-            # Convert to int if desired (rounding down); adjust if you prefer rounding
-            quantity = int(qty_num)
-
-            processed_items.append({
-                'name': name.strip(),
-                'quantity': quantity
-            })
-
-        # Calculate the quote using the processed_items list
-        quote = get_bulk_order_quote(processed_items)
-
-        return jsonify(quote), 200
 
     except Exception as e:
         # Prefer structured logging in real apps
