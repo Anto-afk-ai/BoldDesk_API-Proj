@@ -253,7 +253,7 @@ def get_order_status():
 def calculate_bulk_order():
     """
     Calculate bulk order prices with applicable discounts
-    
+
     Expected request body:
     {
         "items": [
@@ -263,7 +263,7 @@ def calculate_bulk_order():
     }
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         if not data or 'items' not in data:
             return jsonify({'error': 'Missing items list in request'}), 400
 
@@ -271,20 +271,45 @@ def calculate_bulk_order():
         if not isinstance(items, list):
             return jsonify({'error': 'Items must be a list'}), 400
 
-        # Validate each item
-        for item in items:
-            if not isinstance(item, dict) or 'name' not in item or 'quantity' not in item:
-                return jsonify({'error': 'Each item must have name and quantity'}), 400
-            if not isinstance(item.get('quantity'), (int, float)) or item['quantity'] <= 0:
-                return jsonify({'error': 'Quantity must be a positive number'}), 400
-            # Convert quantity to int if it's a float
-            item['quantity'] = int(item['quantity'])
+        processed_items: List[Dict] = []
+        for idx, item in enumerate(items):
+            if not isinstance(item, dict):
+                return jsonify({'error': f'Item at index {idx} must be an object'}), 400
 
-        # Calculate the quote
-        quote = get_bulk_order_quote(items)
+            name = item.get('name')
+            raw_qty = item.get('quantity')
+
+            if not isinstance(name, str) or not name.strip():
+                return jsonify({'error': f'Invalid or missing name for item at index {idx}'}), 400
+
+            # Coerce quantity to number (accept string numbers like "200")
+            try:
+                # allow integers and floats; treat float quantities as numeric then cast to int
+                if isinstance(raw_qty, (int, float)):
+                    qty_num = float(raw_qty)
+                else:
+                    return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
+            except (TypeError, ValueError):
+                return jsonify({'error': f'Invalid quantity for item "{name}"'}), 400
+
+            if qty_num <= 0:
+                return jsonify({'error': f'Quantity must be a positive number for item "{name}"'}), 400
+
+            # Convert to int if desired (rounding down); adjust if you prefer rounding
+            quantity = int(qty_num)
+
+            processed_items.append({
+                'name': name.strip(),
+                'quantity': quantity
+            })
+
+        # Calculate the quote using the processed_items list
+        quote = get_bulk_order_quote(processed_items)
+
         return jsonify(quote), 200
 
     except Exception as e:
+        # Prefer structured logging in real apps
         print(f"Error calculating bulk order: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
