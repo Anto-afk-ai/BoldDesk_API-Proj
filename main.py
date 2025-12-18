@@ -1,3 +1,4 @@
+import os
 import copy
 from functools import wraps
 import threading
@@ -9,7 +10,7 @@ from const.config import *
 import flask_cors
 from utils.order_calculator import get_bulk_order_quote
 
-API_KEY = "qqww22ttzxqwr6778"  # Change this to your desired key
+API_KEY = os.getenv("X-API-KEY") or "<API_KEY>"  # Change this to your desired key
 ALLOWED_KEYS = {API_KEY}
 
 def is_valid_api_key(key: str | None) -> bool:
@@ -403,7 +404,7 @@ def put_order(order_id: str):
     updated = find_order_for_user(user["email"], order_id)
     return jsonify(updated), 200
 
-@api.route('/key')
+@api.route('/key', methods=['GET'])
 def kb():
     return API_KEY
 
