@@ -24,4 +24,5 @@ package-lock.json
 /front-end
 *.pyc
 .env
-/const/__pycache__
+*.pyc
+__pycache__/mcp_blueprint_new.cpython-313.pyc
